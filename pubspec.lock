@@ -183,7 +183,7 @@ packages:
       name: flutter_webview_plugin
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "0.3.7"
+    version: "0.3.8"
   html:
     dependency: transitive
     description:
@@ -325,7 +325,7 @@ packages:
     source: hosted
     version: "1.5.6"
   quiver:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: quiver
       url: "https://pub.flutter-io.cn"
@@ -344,7 +344,7 @@ packages:
       name: shared_preferences
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "0.5.3+4"
+    version: "0.5.3+5"
   shimmer:
     dependency: "direct main"
     description:
@@ -433,7 +433,7 @@ packages:
       name: url_launcher
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "5.1.2"
+    version: "5.1.6"
   uuid:
     dependency: transitive
     description:

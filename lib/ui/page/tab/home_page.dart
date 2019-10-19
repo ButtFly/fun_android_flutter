@@ -2,11 +2,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart' hide Banner, showSearch;
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 
 import 'package:flutter_swiper/flutter_swiper.dart';
 import 'package:fun_android/generated/i18n.dart';
 import 'package:fun_android/ui/helper/refresh_helper.dart';
 import 'package:fun_android/ui/widget/skeleton.dart';
+import 'package:fun_android/utils/status_bar_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:fun_android/config/router_manger.dart';
@@ -38,8 +40,7 @@ class _HomePageState extends State<HomePage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    /// iPhoneX 头部适配
-    double bannerHeight = 150 + MediaQuery.of(context).padding.top;
+    var bannerHeight = MediaQuery.of(context).size.width * 5 / 11;
     return ProviderWidget2<HomeModel, TapToTopModel>(
       model1: HomeModel(),
       // 使用PrimaryScrollController保留iOS点击状态栏回到顶部的功能
@@ -55,8 +56,12 @@ class _HomePageState extends State<HomePage>
               context: context,
               removeTop: false,
               child: Builder(builder: (_) {
-                if (homeModel.error) {
-                  return ViewStateWidget(onPressed: homeModel.initData);
+                if (homeModel.error && homeModel.list.isEmpty) {
+                  return AnnotatedRegion<SystemUiOverlayStyle>(
+                      value: StatusBarUtils.systemUiOverlayStyle(context),
+                      child: ViewStateErrorWidget(
+                          error: homeModel.viewStateError,
+                          onPressed: homeModel.initData));
                 }
                 return RefreshConfiguration.copyAncestor(
                   context: context,
@@ -64,11 +69,12 @@ class _HomePageState extends State<HomePage>
                   twiceTriggerDistance: kHomeRefreshHeight - 15,
                   //最大下拉距离,android默认为0,这里为了触发二楼
                   maxOverScrollExtent: kHomeRefreshHeight,
-
+                  headerTriggerDistance:
+                      80 + MediaQuery.of(context).padding.top / 3,
                   child: SmartRefresher(
-                      enableTwoLevel: true,
                       controller: homeModel.refreshController,
                       header: HomeRefreshHeader(),
+                      enableTwoLevel: homeModel.list.isNotEmpty,
                       onTwoLevel: () async {
                         await Navigator.of(context)
                             .pushNamed(RouteName.homeSecondFloor);
@@ -78,6 +84,7 @@ class _HomePageState extends State<HomePage>
                             .twoLevelComplete();
                       },
                       footer: RefresherFooter(),
+                      enablePullDown: homeModel.list.isNotEmpty,
                       onRefresh: homeModel.refresh,
                       onLoading: homeModel.loadMore,
                       enablePullUp: homeModel.list.isNotEmpty,
@@ -86,6 +93,12 @@ class _HomePageState extends State<HomePage>
                         slivers: <Widget>[
                           SliverToBoxAdapter(),
                           SliverAppBar(
+                            // 加载中并且亮色模式下,状态栏文字为黑色
+                            brightness: Theme.of(context).brightness ==
+                                        Brightness.light &&
+                                    homeModel.busy
+                                ? Brightness.light
+                                : Brightness.dark,
                             actions: <Widget>[
                               EmptyAnimatedSwitcher(
                                 display: tapToTopModel.showTopBtn,
@@ -107,7 +120,7 @@ class _HomePageState extends State<HomePage>
                                 child: EmptyAnimatedSwitcher(
                                   display: tapToTopModel.showTopBtn,
                                   child: Text(Platform.isIOS
-                                      ? 'FunFlutter'
+                                      ? 'Fun Flutter'
                                       : S.of(context).appName),
                                 ),
                               ),
@@ -115,10 +128,14 @@ class _HomePageState extends State<HomePage>
                             expandedHeight: bannerHeight,
                             pinned: true,
                           ),
-//                          SliverPadding(
-//                            padding: EdgeInsets.only(top: 5),
-//                          ),
-                          if (homeModel.idle)
+                          if (homeModel.empty)
+                            SliverToBoxAdapter(
+                                child: Padding(
+                              padding: const EdgeInsets.only(top: 50),
+                              child: ViewStateEmptyWidget(
+                                  onPressed: homeModel.initData),
+                            )),
+                          if (homeModel.topArticles?.isNotEmpty ?? false)
                             HomeTopArticleList(),
                           HomeArticleList(),
                         ],
@@ -161,7 +178,6 @@ class BannerWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height:  150 + MediaQuery.of(context).padding.top,
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
       ),
