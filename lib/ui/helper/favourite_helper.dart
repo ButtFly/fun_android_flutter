@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:fun_android/config/router_manger.dart';
 import 'package:fun_android/generated/i18n.dart';
 import 'package:fun_android/model/article.dart';
+import 'package:fun_android/provider/view_state.dart';
 import 'package:fun_android/ui/widget/favourite_animation.dart';
 import 'package:fun_android/view_model/favourite_model.dart';
 import 'package:fun_android/view_model/user_model.dart';
@@ -40,7 +41,11 @@ addFavourites(BuildContext context,
     }
   } else if (model.error) {
     //失败
-    showToast(S.of(context).loadFailed);
+//    showToast(S.of(context).loadFailed);
+    showToast(model.viewStateError.isNetworkError
+        ? S.of(context).viewStateMessageNetworkError
+        : model.errorMessage);
+
   } else {
     if (playAnim) {
       ///接口调用成功播放动画

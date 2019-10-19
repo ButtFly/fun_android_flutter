@@ -7,7 +7,7 @@ abstract class ViewStateListModel<T> extends ViewStateModel {
 
   /// 第一次进入页面loading skeleton
   initData() async {
-    setBusy(true);
+    setBusy();
     await refresh(init: true);
   }
 
@@ -16,19 +16,17 @@ abstract class ViewStateListModel<T> extends ViewStateModel {
     try {
       List<T> data = await loadData();
       if (data.isEmpty) {
+        list.clear();
         setEmpty();
       } else {
         onCompleted(data);
-        list = data;
-        if (init) {
-          //改变页面状态为非加载中
-          setBusy(false);
-        } else {
-          notifyListeners();
-        }
+        list.clear();
+        list.addAll(data);
+        setIdle();
       }
     } catch (e, s) {
-      handleCatch(e, s);
+      if (init) list.clear();
+      setError(e, s);
     }
   }
 
